@@ -1,0 +1,32 @@
+services:
+    # Readarr - Book Management
+  readarr:
+    <<: *common-keys-apps
+    image: ghcr.io/linuxserver/readarr:nightly
+    container_name: readarr
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["media", "arrs", "all"]
+    networks:
+      - t3_proxy
+    ports:
+      - "8787:8787"
+    volumes:
+      - $DOCKERDIR/appdata/readarr:/config
+      - $AUDIOBOOKDIR:/media/audiobooks
+      - $TORRENTDIR:/data
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      ## HTTP Routers Auth
+      - "traefik.http.routers.readarr-rtr.entrypoints=https"
+      - "traefik.http.routers.readarr-rtr.rule=Host(`readarr.$DOMAINNAME`)"
+      ## Middlewares
+      - "traefik.http.routers.readarr-rtr.middlewares=chain-oauth@file"
+      ## HTTP Services
+      - "traefik.http.routers.readarr-rtr.service=readarr-svc"
+      - "traefik.http.services.readarr-svc.loadbalancer.server.port=8787"

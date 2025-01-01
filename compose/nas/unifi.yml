@@ -1,0 +1,42 @@
+services:
+  # Unifi network controller
+  unifi:
+    container_name: unifi
+    image: linuxserver/unifi-controller:latest
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["apps", "all"]
+    volumes:
+      - $DOCKERDIR/appdata/unifi:/config
+      - $DOCKERDIR/shared:/shared
+    ports:
+      - "8443:8443/tcp" # Controller GUI/API as seen in a web browser
+      - "3478:3478/udp" # STUN
+      - "10001:10001/udp" # AP discovery
+      - "8080:8080/tcp" # Device/ controller comm.
+      # - "1900:1900/udp" # Optional - Conflicts with Synology default ports
+      - "8843:8843/tcp" # Optional, HTTPS portal redirection
+      - "8880:8880/tcp" # Optional, HTTP portal redirection
+      - "6789:6789/tcp" # Optional, Speed test
+      - "5514:5514/udp" # Optional
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      ## HTTP routers
+      #- "traefik.http.routers.unifi-rtr.tls=true"
+      - "traefik.http.routers.unifi-rtr.entrypoints=https"
+      - "traefik.http.routers.unifi-rtr.rule=Host(`unifi.$DOMAINNAME`)"
+      ## Middlewares
+      - "traefik.http.routers.unifi-rtr.middlewares=chain-unifi@file"
+      #- "traefik.http.routers.unifi-rtr.middlewares=middlewares-unifiHeaders@file"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      ## HTTP Services
+      - "traefik.http.routers.unifi-rtr.service=unifi-svc"
+      #- "traefik.http.serversTransports.unifi-svr.insecureSkipVerify=true"
+      #- "traefik.http.services.unifi-svc.loadbalancer.serversTransport=unifi-svr"
+      - "traefik.http.services.unifi-svc.loadbalancer.server.port=8443"
+      - "traefik.http.services.unifi-svc.loadbalancer.server.scheme=https"

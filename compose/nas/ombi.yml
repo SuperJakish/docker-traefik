@@ -1,0 +1,40 @@
+services:
+  # Ombi - Request management
+  ombi:
+    image: linuxserver/ombi:latest
+    container_name: ombi
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    profiles: ["media", "arrs", "all"]
+    networks:
+      - t3_proxy
+    ports:
+      - "7878:7878"
+    volumes:
+      - $DOCKERDIR/appdata/ombi:/config
+      - $TORRENTDIR:/data
+      - $MOVIEDIR:/movies
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      # HTTP Routers Auth Bypass
+      - "traefik.http.routers.ombi-rtr-bypass.entrypoints=websecure"
+      #- "traefik.http.routers.ombi-rtr-bypass.rule=Host(`ombi.$DOMAINNAME`) && (Header(`X-Api-Key`, `$OMBI_API_KEY`) || Query(`apikey`, `$OMBI_API_KEY`))"
+      - "traefik.http.routers.ombi-rtr-bypass.rule=Host(`ombi.$DOMAINNAME`) && Header(`traefik-auth-bypass-key`, `$TRAEFIK_AUTH_BYPASS_KEY`)" # Bypass Auth for LunaSea on iOS
+      - "traefik.http.routers.ombi-rtr-bypass.priority=100"
+      # HTTP Routers Auth
+      - "traefik.http.routers.ombi-rtr.entrypoints=websecure"
+      - "traefik.http.routers.ombi-rtr.rule=Host(`ombi.$DOMAINNAME`)"
+      - "traefik.http.routers.ombi-rtr.priority=99"
+      # Middlewares
+      - "traefik.http.routers.ombi-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.ombi-rtr.middlewares=chain-oauth@file"
+      # HTTP Services
+      - "traefik.http.routers.ombi-rtr.service=ombi-svc"
+      - "traefik.http.routers.ombi-rtr-bypass.service=ombi-svc"
+      - "traefik.http.services.ombi-svc.loadbalancer.server.port=3579"

@@ -1,0 +1,36 @@
+services:
+  # Requestrr - Media Request Discord Bot
+  requestrr:
+    image: linuxserver/requestrr:latest
+    container_name: requestrr
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    profiles: ["media", "arrs", "all"]
+    networks:
+      - t3_proxy
+    volumes:
+      - $DOCKERDIR/appdata/requestrr:/config
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      # HTTP Routers Auth Bypass
+      - "traefik.http.routers.requestrr-rtr-bypass.entrypoints=websecure"
+      #- "traefik.http.routers.requestrr-rtr-bypass.rule=Host(`requestrr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$REQUESTRR_API_KEY`) || Query(`apikey`, `$REQUESTRR_API_KEY`))"
+      - "traefik.http.routers.requestrr-rtr-bypass.rule=Host(`requestrr.$DOMAINNAME`) && Header(`traefik-auth-bypass-key`, `$TRAEFIK_AUTH_BYPASS_KEY`)" # Bypass Auth for LunaSea on iOS
+      - "traefik.http.routers.requestrr-rtr-bypass.priority=100"
+      # HTTP Routers Auth
+      - "traefik.http.routers.requestrr-rtr.entrypoints=websecure"
+      - "traefik.http.routers.requestrr-rtr.rule=Host(`requestrr.$DOMAINNAME`)"
+      - "traefik.http.routers.requestrr-rtr.priority=99"
+      # Middlewares
+      - "traefik.http.routers.requestrr-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.requestrr-rtr.middlewares=chain-oauth@file"
+      # HTTP Services
+      - "traefik.http.routers.requestrr-rtr.service=requestrr-svc"
+      - "traefik.http.routers.requestrr-rtr-bypass.service=requestrr-svc"
+      - "traefik.http.services.requestrr-svc.loadbalancer.server.port=4545"
