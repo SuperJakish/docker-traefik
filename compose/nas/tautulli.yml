@@ -14,8 +14,20 @@ services:
       - "8181:8181"
     volumes:
       - $DOCKERDIR/appdata/tautulli/config:/config
-      - $DOCKERDIR/appdata/plex/Library/Application Support/Plex Media Server/Logs:/logs:ro # For tautulli Plex log viewer
+      - $PMS_LOGS:/logs:ro # For tautulli Plex log viewer
     environment:
       TZ: $TZ
       PUID: $PUID
       PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      ## HTTP Routers Auth
+      - "traefik.http.routers.tautulli-rtr.entrypoints=https"
+      #- "traefik.http.routers.tautulli-rtr.rule=Host(`tautulli.$DOMAINNAME_HS`)"
+      - "traefik.http.routers.tautulli-rtr.rule=Host(`tautulli.$DOMAINNAME_HS`) && (Headers(`X-Api-Key`, `$TAUTULLI_API_KEY`) || Query(`apikey`, `$TAUTULLI_API_KEY`))"
+      ## Middlewares
+      - "traefik.http.routers.tautulli-rtr.middlewares=chain-oauth@file"
+      #- "traefik.http.routers.tautulli-bypass.middlewares=chain-no-auth@file"
+      ## HTTP Services
+      - "traefik.http.routers.tautulli-rtr.service=tautulli-svc"
+      - "traefik.http.services.tautulli-svc.loadbalancer.server.port=8181"

@@ -1,0 +1,30 @@
+services:
+  # Minecraft Java server
+  mc_java:
+    image: itzg/minecraft-server:2024.4.1
+    container_name: mc_java
+    networks:
+      - default
+    #security_opt:
+    #  - no-new-privileges
+    privileged: true
+    restart: unless-stopped
+    profiles: ["games", "all"]
+    ports:
+      - $MC_PORT:25565
+    environment:
+      EULA: "TRUE"
+      DEBUG: "FALSE"
+      OPS_FILE: "$DOCKERDIR/mc_java/ops.json"
+      #MEMORY: "8G"
+      INIT_MEMORY: "2G"
+      MAX_MEMORY: "4G"
+      DEBUG_MEMORY: "TRUE"
+    volumes:
+      - $DOCKERDIR/appdata/mc_java:/data
+      - $DOCKERDIR/appdata/mc_java/plugins:/data/plugins
+      - $DOCKERDIR/appdata/mc_java/mods:/data/mods
+      - $DOCKERDIR/appdata/mc_java/config:/data/config
+      - /etc/localtime:/etc/localtime:ro
+    tty: true
+    stdin_open: true

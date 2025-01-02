@@ -29,9 +29,9 @@ services:
       ## HTTP routers
       #- "traefik.http.routers.unifi-rtr.tls=true"
       - "traefik.http.routers.unifi-rtr.entrypoints=https"
-      - "traefik.http.routers.unifi-rtr.rule=Host(`unifi.$DOMAINNAME`)"
+      - "traefik.http.routers.unifi-rtr.rule=Host(`unifi.$DOMAINNAME_HS`)"
       ## Middlewares
-      - "traefik.http.routers.unifi-rtr.middlewares=chain-unifi@file"
+      - "traefik.http.routers.unifi-rtr.middlewares=chain-oauth@file"
       #- "traefik.http.routers.unifi-rtr.middlewares=middlewares-unifiHeaders@file"
       - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
       ## HTTP Services

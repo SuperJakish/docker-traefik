@@ -23,14 +23,16 @@
       - $DOCKERDIR/appdata/transmission-vpn/config:/config
       - $EXTDRIVE/downloads:/data/downloads
     environment:
-      <<: *default-tz-puid-pgid
-      OPENVPN_PROVIDER: FASTESTVPN
-      OPENVPN_USERNAME: $FASTESTVPN_USERNAME
-      OPENVPN_PASSWORD: $FASTESTVPN_PASSWORD
-      #OPENVPN_CONFIG: "Switzerland-UDP"
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+      OPENVPN_PROVIDER: $OPENVPN_PROVIDER
+      OPENVPN_USERNAME: $OPENVPN_USER
+      OPENVPN_PASSWORD: $OPENVPN_PASS
+      OPENVPN_CONFIG: $OPENVPN_CONFIG
       #OPENVPN_OPTS: --inactive 3600 --ping 10 --ping-exit 60
       LOCAL_NETWORK: "$LOCAL_NETWORK"
-      UMASK_SET: 2
+      UMASK_SET: 002
       # These transmission settings are not needed as /data/transmission-home/settings.json is persistent
       TRANSMISSION_RPC_AUTHENTICATION_REQUIRED: "true"
       TRANSMISSION_RPC_HOST_WHITELIST: "127.0.0.1,$SERVER_IP"
@@ -56,7 +58,7 @@
       - "traefik.enable=true"
       ## HTTP Routers
       - "traefik.http.routers.transmission-vpn-rtr.entrypoints=https"
-      - "traefik.http.routers.transmission-vpn-rtr.rule=Host(`trans.$DOMAINNAME_CLOUD_SERVER`)"
+      - "traefik.http.routers.transmission-vpn-rtr.rule=Host(`transmission.$DOMAINNAME_HS`)"
       ## Middlewares
       - "traefik.http.routers.transmission-vpn-rtr.middlewares=middlewares-rate-limit@file"
       ## HTTP Services

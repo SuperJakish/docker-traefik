@@ -1,0 +1,44 @@
+services:
+  # Plex - Media Server
+  plex:
+    image: plexinc/pms-docker:plexpass
+    container_name: plex
+    networks:
+      - default
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    profiles: ["media", "all"]
+    devices:
+      - /dev/dri:/dev/dri # for harware transcoding
+    ports:
+      - "$PLEX_PORT:32400/tcp"
+      - "3005:3005/tcp"
+      - "8324:8324/tcp"
+      - "32469:32469/tcp"
+      - "1900:1900/udp" # might conflict with xTeVe and Synology default ports... don't think I use these
+      - "32410:32410/udp"
+      - "32412:32412/udp"
+      - "32413:32413/udp"
+      - "32414:32414/udp"
+      - "$PLEX_WEB_TOOLS_PORT:33400"
+    volumes:
+      - $DOCKERDIR/appdata/plex/plugins:/config/plugins
+      - $DOCKERDIR/appdata/plex/plex_tmp:/config/plex_tmp
+      #- $DOCKERDIR/appdata/plex/Codecs:/config/Library/Application Support/Plex Media Server/Codecs
+      - $STORAGE/config/Library:/config/Library
+      - $STORAGE/config/plex:/config/plex
+      - $PMS_LOGS:/logs:ro # For tautulli Plex log viewer
+      - $TORRENTDIR:/downloads
+      - $MEDIAROOT:/media
+      - /dev/shm:/transcode # Offload transcoding to RAM if you have enough RAM
+    environment:
+      TZ: $TZ
+      HOSTNAME: "Team Warren Media"
+      PLEX_CLAIM_FILE: /run/secrets/plex_claim
+      PLEX_UID: $PUID
+      PLEX_GID: $PGID
+      ADVERTISE_IP: "http://$MEDIASERVER_IP:32400/,https://plex.$DOMAINNAME"
+      ALLOWED_NETWORKS: $LOCAL_IPS
+    secrets:
+      - plex_claim
